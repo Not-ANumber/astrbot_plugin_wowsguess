@@ -1,0 +1,88 @@
+{
+  "mode": {
+    "description": "运行模式",
+    "hint": "local：插件进程内运行，零部署；remote：连接独立的 wowsguess-coop 服务",
+    "type": "string",
+    "default": "local",
+    "options": [
+      "local",
+      "remote"
+    ]
+  },
+  "server": {
+    "description": "数据服",
+    "hint": "wg = WG 官服；lesta = Lesta 服（数据包暂未提供，选择后会明确报缺失）。两个服使用独立数据库和统计",
+    "type": "string",
+    "default": "wg",
+    "options": [
+      "wg",
+      "lesta"
+    ]
+  },
+  "packs_dir": {
+    "description": "数据包根目录",
+    "hint": "留空使用 AstrBot plugin_data/astrbot_plugin_wowsguess/packs（不存在时回退插件目录下的 packs/）。目录结构为 packs/<server>/ships.json、attributes.json、difficulties.json、pools/",
+    "type": "string",
+    "default": ""
+  },
+  "data_dir": {
+    "description": "本地模式数据目录（高级）",
+    "hint": "留空使用 packs_dir/<server>；填了就直接用这个目录，适合手动指定单个数据包。目录里需要 ships.json、attributes.json、difficulties.json、pools/",
+    "type": "string",
+    "default": ""
+  },
+  "db_path": {
+    "description": "本地模式数据库路径（高级）",
+    "hint": "留空使用 AstrBot 的 plugin_data/astrbot_plugin_wowsguess/bot-<server>.sqlite；数据库包含进行中的答案，不要放进静态目录",
+    "type": "string",
+    "default": ""
+  },
+  "font_path": {
+    "description": "本地模式中文字体路径",
+    "hint": "留空自动查找插件 assets/fonts/ 或系统字体；跨平台部署建议使用随插件附带的 Noto Sans SC 子集",
+    "type": "string",
+    "default": ""
+  },
+  "allowed_groups": {
+    "description": "群白名单",
+    "hint": "逗号分隔。NapCat 填群号，QQ 官方填 group_openid；留空表示所有群都响应",
+    "type": "string",
+    "default": ""
+  },
+  "service_url": {
+    "description": "wowsguess 游戏服务地址（remote 模式）",
+    "hint": "remote 模式才使用。例如 http://127.0.0.1:8787；AstrBot 在 Docker 里时写 http://wowsguess:8787",
+    "type": "string",
+    "default": "http://127.0.0.1:8787"
+  },
+  "auth_token": {
+    "description": "服务访问令牌（remote 模式）",
+    "hint": "remote 模式才使用。与 wowsguess-coop 服务的令牌保持一致",
+    "type": "string",
+    "default": "",
+    "secret": true
+  },
+  "request_timeout": {
+    "description": "请求超时（秒，remote 模式）",
+    "hint": "图片渲染通常在 1 秒内完成；网络较慢或服务在另一台机器时可调大",
+    "type": "int",
+    "default": 15,
+    "slider": {
+      "min": 3,
+      "max": 60,
+      "step": 1
+    }
+  },
+  "reserved_commands": {
+    "description": "留给 AstrBot 的 / 指令",
+    "hint": "逗号分隔。插件不会拦截这些指令，例如 /help、/model、/new。游戏帮助请用 /帮助 或 #帮助",
+    "type": "string",
+    "default": "help,model,new,reset,stop,sid,persona,provider,plugin,tool,mcp,status"
+  },
+  "notify_errors": {
+    "description": "remote 服务不可用时在群里提示",
+    "hint": "默认关闭，避免服务重启时刷屏；每个群最多每 60 秒提示一次",
+    "type": "bool",
+    "default": false
+  }
+}

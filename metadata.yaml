@@ -1,0 +1,41 @@
+name: astrbot_plugin_wowsguess
+display_name: 窝一把 · 舰船合作猜谜
+short_desc: 在 QQ 群里开一局《战舰世界》舰船合作猜谜，默认本地零部署
+desc: |
+  把「窝一把」的多人合作猜船模式接进 AstrBot。
+
+  全群共用一艘答案和 8 次机会，任何人可以猜；猜中即胜，次数用尽即负。
+  每次有效猜测返回一张棋盘图，答案只在结束时揭晓。
+
+  默认 local 模式：游戏核心、SQLite 和 Pillow 渲染都在 AstrBot 进程内，
+  不需要 Docker、Node、端口或 token。插件内置 WG 官服数据包，装好即可玩。
+  数据包按 server 分目录：默认 wg；lesta 预留，当前数据包暂未提供。
+  也可以把 mode 改成 remote，连接独立的 wowsguess-coop 服务，供多机器人
+  或多进程共享状态。
+
+  命令：
+    /窝一把 [n|h] [5-8]
+    /ccb [n|h] [5-8]
+    /状态
+    /统计
+    /结束
+    /再来一局
+    /帮助
+    /秋月
+    /1 或 /取消（候选确认）
+
+  也支持 # 或 ! 前缀，例如 #窝一把、#秋月，方便避开 AstrBot 自己的 / 指令。
+version: 0.4.2
+author: wowsguess
+repo: https://github.com/Not-ANumber/astrbot_plugin_wowsguess
+social_link: https://woyiba.com
+tags:
+  - 游戏
+  - 战舰世界
+  - QQ群
+  - 猜谜
+astrbot_version: ">=4.13.0"
+support_platforms:
+  - aiocqhttp
+  - qq_official
+  - qq_official_webhook

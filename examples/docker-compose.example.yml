@@ -1,0 +1,36 @@
+# Template for the optional remote mode. The default local mode needs no service.
+# This repository does not publish the wowsguess-coop image; replace the image
+# name and environment variables with your actual service.
+#
+# The game service is intentionally NOT published on a host port. AstrBot and
+# wowsguess talk over the compose network, and only AstrBot is exposed.
+
+services:
+  astrbot:
+    image: soulter/astrbot:latest
+    restart: unless-stopped
+    ports:
+      - "6185:6185"   # WebUI
+      - "6199:6199"   # OneBot v11 reverse WebSocket
+    volumes:
+      - ./astrbot-data:/AstrBot/data
+
+  wowsguess:
+    # Replace with the real repository/tag once the service is published.
+    image: ghcr.io/your-name/wowsguess-coop:latest
+    restart: unless-stopped
+    environment:
+      # Must match the plugin's auth_token.
+      AUTH_TOKEN: change-me
+      # QQ group numbers (NapCat) or group_openid values (official QQ).
+      ALLOWED_GROUPS: "123456789"
+      DATA_DIR: /data
+      BOT_DB_PATH: /var/lib/wowsguess/bot.sqlite
+    volumes:
+      # Data is user-supplied and mounted read-only. It is not in this repo.
+      - ./wowsguess-data:/data:ro
+      # The SQLite file contains answers; keep it private and back it up.
+      - wowsguess-db:/var/lib/wowsguess
+
+volumes:
+  wowsguess-db:
