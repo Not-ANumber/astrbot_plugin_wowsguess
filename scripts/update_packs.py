@@ -41,7 +41,7 @@ DEFAULT_SOURCE = ROOT.parent / "GTS"
 SERVERS = ("wg", "lesta")
 IWARSHIP_INDEX = "https://iwarship.net/wowsdb/index"
 IWARSHIP_SERVER = {"wg": "ASIA", "lesta": "RU"}
-UA = "wowsguess-astrbot-plugin/update-packs (+https://github.com/Not-ANumber/astrbot_plugin_wowsguess)"
+UA = "Mozilla/5.0 (compatible; wowsguess/0.1; personal fan project; update-packs)"
 
 
 class UpdateError(RuntimeError):
