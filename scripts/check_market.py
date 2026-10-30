@@ -393,6 +393,24 @@ def check_pack(report: Report) -> None:
                 else:
                     report.warn("packs/lesta/manifest.json 没有 files 表")
 
+    # attributes / difficulties 是两个服共用的定义（导出时从主仓库 data/ 复制）。
+    # 只更新一个包会留下旧定义，所以这里强制要求两个包一致。
+    if (wg / "ships.json").is_file() and (lesta / "ships.json").is_file():
+        for name in ("attributes.json", "difficulties.json"):
+            try:
+                wg_doc = json.loads(read_text(wg / name))
+                lesta_doc = json.loads(read_text(lesta / name))
+            except (OSError, json.JSONDecodeError) as exc:
+                report.fail(f"两个包的 {name} 读取失败：{exc}")
+                continue
+            if wg_doc == lesta_doc:
+                report.ok(f"两个包的 {name} 一致")
+            else:
+                report.fail(
+                    f"两个包的 {name} 不一致；先重建 Lesta 包"
+                    "（py scripts/update_packs.py --server lesta）",
+                )
+
 
 def check_repo(report: Report) -> None:
     try:

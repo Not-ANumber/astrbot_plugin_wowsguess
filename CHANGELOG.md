@@ -14,6 +14,9 @@
 - `packs/lesta/README.md` 更新为实际数据说明、与 WG 包的差异和生成方式。
 - 真实数据冒烟测试同时覆盖 WG 与 Lesta 包，缺包时自动跳过；新增答案池与 `groupOf` 不变量断言。
 - 数据包缺失提示改为“随插件分发，缺失请重装或用 `data_dir`”，不再写“暂未提供”。
+- 新增维护者脚本 `scripts/update_packs.py`：一条命令完成 iwarship 版本检查、两服构建、
+  导出、单元测试和市场预检；`check_market.py` 增加两包 `attributes.json` /
+  `difficulties.json` 一致性的断言，防止只更新一个包留下旧定义。
 
 ## 0.4.2 — 2026-10-29
 
