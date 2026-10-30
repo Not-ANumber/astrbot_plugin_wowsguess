@@ -67,7 +67,10 @@ def resolve_pack_dir(
     if not (path / "ships.json").is_file():
         hint = ""
         if server == "lesta" and not data_dir:
-            hint = "；Lesta 数据包暂未提供，可先用 server=wg，或用 data_dir 手动指定"
+            hint = (
+                "；Lesta 数据包随插件分发，若缺失请重装插件或检查 packs/lesta/，"
+                "也可以用 data_dir 手动指定；临时可先用 server=wg"
+            )
         raise PackError(
             f"数据包「{server_label(server)}」未找到：{path} 缺少 ships.json{hint}",
         )

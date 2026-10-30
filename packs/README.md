@@ -13,31 +13,48 @@ packs/
       standard.json
       hard.json
   lesta/
-    README.md          # 暂无数据，占位
+    manifest.json
+    ships.json
+    attributes.json
+    difficulties.json
+    pools/
+      standard.json
+      hard.json
 ```
 
-- `packs/wg/` 随插件分发；`packs/lesta/` 目前只有占位说明，数据需要自行放入。
+- `packs/wg/` 和 `packs/lesta/` 都随插件分发，安装后直接可用。
 - 运行时会优先读 AstrBot `plugin_data/astrbot_plugin_wowsguess/packs/<server>/`，不存在时
   回退到插件目录下的 `packs/<server>/`；也可以用 `packs_dir` 显式指定根目录。
-- `manifest.json` 记录 `server`、数据源、`generatedAt`、船数和每个文件的 sha256。
+- `manifest.json` 记录 `server`、数据源、`sourceVersionId`、`generatedAt`、船数和每个文件的 sha256。
 - 每个服使用独立数据库：`bot-wg.sqlite` / `bot-lesta.sqlite`，统计和进行中的局不会混在一起。
+- 内置包跟着插件版本走；想钉住别的快照，用外置包 + `packs_dir` / `data_dir`，
+  不要修改内置目录（插件更新会覆盖）。
 
 ## WG 包
 
 `packs/wg/` 已内置，来源和授权说明见 [wg/README.md](wg/README.md)。数据更新由维护者
 按 `manifest.json` 的规则重新生成；普通用户不需要自己导出。
 
+## Lesta 包
+
+`packs/lesta/` 是 Lesta 服（iwarship `RU`，versionId 446）的瘦身包，船表与 WG 不同，
+已随插件分发，来源、中文名和授权说明见 [lesta/README.md](lesta/README.md)。
+
+两套包的数据版本互相独立：看各自的 `manifest.json` 的 `sourceVersionId` /
+`generatedAt`，插件启动日志也会打印当前包的船数和生成时间。切换 `server` 不会改动
+另一服的包或数据库。
+
 ## 切换到 Lesta
 
-Lesta 数据准备好后，插件不需要改代码，按下面顺序切：
+Lesta 包已内置，插件不需要改代码，按下面顺序切：
 
-1. 准备一个与 `packs/wg/` 同结构的目录，`manifest.json` 里写 `"server": "lesta"`；
-2. 放到以下任意一处：
-   - `plugin_data/astrbot_plugin_wowsguess/packs/lesta/`（推荐，插件更新不会丢）；
-   - 插件目录 `packs/lesta/`（随插件一起分发时使用）；
-   - 任意目录，然后把插件配置的 `data_dir` 指向它；
-3. 把插件配置的 `server` 改成 `lesta`；
-4. 重载插件或重启 AstrBot。
+1. 把插件配置的 `server` 改成 `lesta`；
+2. 重载插件或重启 AstrBot。
+
+如果用的是外置或自定义 Lesta 包，先把它放到以下任意一处，再执行上面两步：
+
+- `plugin_data/astrbot_plugin_wowsguess/packs/lesta/`（推荐，插件更新不会丢）；
+- 任意目录，然后把插件配置的 `data_dir` 指向它。
 
 切换后：
 
@@ -47,8 +64,8 @@ Lesta 数据准备好后，插件不需要改代码，按下面顺序切：
 - 当前 `server` 是插件级配置。如果同一个 AstrBot 实例要同时服务 WG 和 Lesta 的群，
   需要跑两个实例/容器；一个实例只能选一个服。
 
-`packs/lesta/` 目前只有占位说明。在数据放进去之前，选择 `server: lesta` 会明确报
-数据包缺失，不会静默回退到 WG。
+外置包缺失或清单里的 `server` 对不上时，插件会明确报数据包缺失/不匹配，
+不会静默回退到 WG。
 
 ## 手动数据目录
 

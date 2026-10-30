@@ -1,5 +1,20 @@
 # Changelog
 
+## 未发布
+
+- 新增 Lesta 服数据链路：主仓库 `npm run data:lesta` 从 iwarship `RU` 快照
+  （versionId 446）生成 739 艘船的船表、26 项属性和两套答案池（598 / 593 艘），
+  再经 `export_bot_data.py` 导出到 `packs/lesta/`。
+- Lesta 舰名优先取 iwarship 详情页；缺口用社区汉化
+  `LocalizedKorabli/Korabli-LESTA-L10N` 补齐（CC BY-NC-SA 4.0，署名写在数据包说明里），
+  与详情页译名不一致时保留为搜索别名（36 艘）。
+- Lesta 数据包随仓库和插件 ZIP 分发（`packs/lesta/`，约 0.45 MiB）；README 新增
+  「数据包与数据版本」一节：用 `server` 选 wg / lesta，用 `manifest.json` 的
+  `sourceVersionId` / `generatedAt` 确认版本，要用别的快照就外置包 + `data_dir`。
+- `packs/lesta/README.md` 更新为实际数据说明、与 WG 包的差异和生成方式。
+- 真实数据冒烟测试同时覆盖 WG 与 Lesta 包，缺包时自动跳过；新增答案池与 `groupOf` 不变量断言。
+- 数据包缺失提示改为“随插件分发，缺失请重装或用 `data_dir`”，不再写“暂未提供”。
+
 ## 0.4.2 — 2026-10-29
 
 - 公开 README 收敛为用户文档：安装、命令、配置、数据包、限制和许可；

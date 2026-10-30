@@ -6,19 +6,19 @@
 每次有效猜测返回一张棋盘图，答案只在结束时揭晓。
 
 **默认 local 模式是零部署的**：游戏核心、SQLite、Pillow 渲染都在 AstrBot 进程内，
-不需要 Docker、Node、端口或 token。插件内置 WG 官服数据包，装好即可玩；Lesta 数据需另行放入。
+不需要 Docker、Node、端口或 token。插件内置 WG 官服和 Lesta 服两套数据包，装好即可玩。
 
 ## 两种模式
 
 | 模式 | 需要什么 | 适合 |
 |---|---|---|
-| **local（默认）** | 插件（内置 `packs/wg`；Lesta 另放 `packs/lesta`） | 绝大多数 AstrBot 用户；无额外进程 |
+| **local（默认）** | 插件（内置 `packs/wg` 与 `packs/lesta`） | 绝大多数 AstrBot 用户；无额外进程 |
 | **remote** | 独立的 `wowsguess-coop` HTTP 服务 + 地址/token | 多机器人共享状态、已有服务、想集中运维 |
 
 local 模式按配置的 `server` 选择数据包：默认 `wg`，优先读取 AstrBot
-`plugin_data/astrbot_plugin_wowsguess/packs/wg/`，没有时使用插件内置的 `packs/wg/`；
-Lesta 为 `server: lesta` + `packs/lesta/`（当前数据包暂未提供）。数据库按服分开，
-默认写到 AstrBot 的 `data/plugin_data/astrbot_plugin_wowsguess/bot-<server>.sqlite`。
+`plugin_data/astrbot_plugin_wowsguess/packs/<server>/`，没有时使用插件内置的
+`packs/<server>/`。数据库按服分开，默认写到 AstrBot 的
+`data/plugin_data/astrbot_plugin_wowsguess/bot-<server>.sqlite`。
 
 ## 安装
 
@@ -35,17 +35,40 @@ https://github.com/Not-ANumber/astrbot_plugin_wowsguess
 
 AstrBot 会自动安装 `requirements.txt` 里的 Pillow。
 
-### 2. 数据包（local 模式）
+### 2. 数据包与数据版本（local 模式）
 
-**WG 官服数据包已经内置**（`packs/wg/`，约 0.5 MiB），从市场或 Git 安装后直接可用，
-不需要再导出。来源、版本和授权说明见 [packs/wg/README.md](packs/wg/README.md)；
-数据不在 MIT 许可范围内，再分发前请确认授权。
+插件内置两套数据包，**用配置项 `server` 选择用哪一套**：
 
-一个包目录里需要：
+| `server` | 数据包 | 数据源快照 | 舰船 | 答案池（普通 / 困难） |
+|---|---|---|---|---|
+| `wg`（默认） | `packs/wg/` | iwarship ASIA `versionId 435` | 784 | 604 / 595 |
+| `lesta` | `packs/lesta/` | iwarship RU `versionId 446` | 739 | 598 / 593 |
+
+设置位置：AstrBot WebUI → 插件配置 → `server` 选 `wg` 或 `lesta`，然后重载插件
+或重启 AstrBot。两个服使用独立数据库（`bot-wg.sqlite` / `bot-lesta.sqlite`），
+切换不会混统计，也不会丢掉另一服进行中的局。
+
+**怎么确认当前用的是哪份数据版本：**
+
+- 看 `packs/<server>/manifest.json`：`sourceVersionId` 是 iwarship 快照号，
+  `generatedAt` 是生成时间，`shipCount` / `attributeCount` 是规模和属性数，
+  `files` 里是每个文件的 `size` / `sha256`。
+- 启动日志会打印一行包描述，例如 `WG 官服 · 784 艘 · 2026-10-24T…`。
+- 数据版本变化会中止该服进行中的局——答案和属性不能跨版本继续，这是有意行为。
+
+**想用别的数据版本：**
+
+- 插件升级时，内置包会换成维护者打包时的快照，这是默认的“跟插件版本走”。
+- 想钉住另一份快照、或用自己构建的数据包：把配置项 `data_dir` 指向一个完整包目录，
+  此时 `server` 只用于选数据库和校验清单，不再决定路径。
+- 不要直接修改插件目录里的 `packs/<server>/`：插件更新会覆盖它。外置包放到
+  `plugin_data/astrbot_plugin_wowsguess/packs/<server>/`（推荐），或任意目录 + `data_dir`。
+
+一个包目录的结构（两个服相同）：
 
 ```text
-packs/wg/
-├─ manifest.json        # server、数据源、generatedAt、船数、文件 sha256
+packs/<server>/
+├─ manifest.json        # server、数据源、sourceVersionId、generatedAt、船数、文件 sha256
 ├─ ships.json
 ├─ attributes.json
 ├─ difficulties.json
@@ -54,13 +77,10 @@ packs/wg/
    └─ hard.json
 ```
 
-Lesta 服预留了 `packs/lesta/`，当前未提供数据包；选择 `server: lesta` 且目录为空时
-会明确提示数据包缺失，不会回退到 WG。Lesta 数据准备好后，按
-[packs/README.md](packs/README.md) 的“切换到 Lesta”放入包、改 `server: lesta` 并重载插件，
-不需要改代码。
-
-如果不想用内置包，可以在配置里用 `data_dir` 直接指向任意一个包目录；
-设置后 `server` 只用于数据库和清单校验。
+两个包都随仓库和插件 ZIP 分发，不需要再导出。数据的来源、版本和授权说明分别在
+[packs/wg/README.md](packs/wg/README.md) 和
+[packs/lesta/README.md](packs/lesta/README.md)；数据不在 MIT 许可范围内，
+再分发前请确认授权（Lesta 的中文舰名还有 CC BY-NC-SA 4.0 的署名要求）。
 
 ### 3. 直接玩
 
@@ -176,9 +196,9 @@ py -m py_compile main.py wowsguess/*.py wowsguess/render/*.py
 ## 已知限制
 
 - **只支持群聊**。私聊没有 `group_id`，插件会直接跳过。
-- **WG 数据包随仓库分发**。`packs/wg/` 内置在仓库和 ZIP 中；数据授权与代码 MIT 许可分开，
-  见 [packs/wg/README.md](packs/wg/README.md)。
-- **Lesta 数据包暂未提供**。`server: lesta` 会明确报缺失，不会回退到 WG。
+- **两套数据包都随仓库分发**。`packs/wg/`（784 艘）和 `packs/lesta/`（739 艘）
+  内置在仓库与 ZIP 中；数据授权与代码 MIT 许可分开，见各自的 README。
+  想换用别的快照用 `data_dir`，不要改内置目录。
 - **`/help` 不归游戏管**。游戏帮助用 `/帮助` 或 `#帮助`。
 - **官方 Markdown 按钮降级**：AstrBot 公开消息链没有 keyboard 组件；插件会发
   Markdown 菜单，并把按钮对应的 `/命令` 附成一行文本提示，功能不受影响。

@@ -271,6 +271,11 @@ def check_zip(report: Report) -> None:
             report.warn(
                 "ZIP 没有内置 packs/wg/ships.json；市场默认安装后本地模式还需要下载或手动放入",
             )
+        lesta_entries = [name for name in pack_entries if name.startswith("packs/lesta/")]
+        if "packs/lesta/ships.json" in names:
+            report.ok(f"ZIP 内置 Lesta 数据包（{len(lesta_entries)} 个 JSON）")
+        else:
+            report.warn("ZIP 没有内置 packs/lesta/ships.json")
 
         if "logo.png" in names:
             report.ok("ZIP 包含 logo.png")
@@ -344,10 +349,49 @@ def check_pack(report: Report) -> None:
     else:
         report.warn("packs/wg/manifest.json 不存在；建议重新导出以生成校验清单")
 
-    if not (packs / "lesta" / "ships.json").is_file():
-        report.ok("packs/lesta 为空（当前设计如此，选择 lesta 会明确报缺失）")
+    lesta = packs / "lesta"
+    if not (lesta / "ships.json").is_file():
+        report.warn(
+            "packs/lesta/ships.json 不存在；随仓库分发时应存在，本地开发可运行 "
+            "py scripts/export_bot_data.py --source ../GTS/data/servers/lesta --server lesta",
+        )
     else:
         report.ok("packs/lesta 数据包存在")
+        manifest_path = lesta / "manifest.json"
+        if not manifest_path.is_file():
+            report.warn("packs/lesta/manifest.json 不存在；重新导出以生成校验清单")
+        else:
+            try:
+                manifest = json.loads(read_text(manifest_path))
+            except json.JSONDecodeError as exc:
+                report.fail(f"packs/lesta/manifest.json 不是合法 JSON：{exc}")
+                manifest = None
+            if isinstance(manifest, dict):
+                if manifest.get("server") != "lesta":
+                    report.fail(f"packs/lesta 清单 server 不是 lesta：{manifest.get('server')!r}")
+                else:
+                    report.ok("packs/lesta 清单 server=lesta")
+                files = manifest.get("files")
+                if isinstance(files, dict):
+                    bad = []
+                    for rel, meta in files.items():
+                        path = lesta / rel
+                        if not path.is_file():
+                            bad.append(f"{rel} 缺失")
+                            continue
+                        raw = path.read_bytes()
+                        if not isinstance(meta, dict):
+                            bad.append(f"{rel} 元数据非法")
+                        elif meta.get("size") != len(raw):
+                            bad.append(f"{rel} size 不一致")
+                        elif meta.get("sha256") != hashlib.sha256(raw).hexdigest():
+                            bad.append(f"{rel} sha256 不一致")
+                    if bad:
+                        report.fail(f"packs/lesta 清单校验失败：{'; '.join(bad[:5])}")
+                    else:
+                        report.ok(f"packs/lesta 清单校验通过（{len(files)} 个文件）")
+                else:
+                    report.warn("packs/lesta/manifest.json 没有 files 表")
 
 
 def check_repo(report: Report) -> None:

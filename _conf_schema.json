@@ -11,7 +11,7 @@
   },
   "server": {
     "description": "数据服",
-    "hint": "wg = WG 官服；lesta = Lesta 服（数据包暂未提供，选择后会明确报缺失）。两个服使用独立数据库和统计",
+    "hint": "wg = WG 官服；lesta = Lesta 服。两套数据包都已内置，切换后使用独立数据库和统计",
     "type": "string",
     "default": "wg",
     "options": [

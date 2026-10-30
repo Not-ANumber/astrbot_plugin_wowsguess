@@ -11,14 +11,11 @@ env/
 *.sqlite3
 data/
 bot-data/
-# WG 数据包随插件分发；Lesta 及其它本地 pack 默认留在仓库外
+# 两个服的数据包都随插件分发；其它本地 pack 留在仓库外
 packs/*
 !packs/README.md
 !packs/wg/
 !packs/lesta/
-!packs/lesta/README.md
-packs/lesta/*.json
-packs/lesta/pools/
 _tmp/
 .pytest_cache/
 .coverage

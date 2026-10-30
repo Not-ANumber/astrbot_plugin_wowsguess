@@ -109,6 +109,13 @@ def main() -> None:
     attributes_doc = _read(source / "attributes.json")
     difficulties_doc = _read(source / "difficulties.json")
 
+    # 防止把 WG 的目录当成 lesta 导出（或反过来）——清单里的 server 会骗过插件。
+    source_server = (ships_doc.get("source") or {}).get("server")
+    if source_server and source_server != args.server:
+        raise SystemExit(
+            f"source ships.json 属于 {source_server} 服，不能用 --server {args.server} 导出"
+        )
+
     ships = [slim_ship(raw) for raw in ships_doc.get("ships") or []]
     attributes = [
         slim_attribute(raw) for raw in attributes_doc.get("attributes") or []
