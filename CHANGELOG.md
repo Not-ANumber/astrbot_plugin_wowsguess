@@ -18,6 +18,9 @@
   导出、单元测试和市场预检；完整输出默认写入 `logs/update-packs-<时间>.log`。
   `check_market.py` 增加两包 `attributes.json` / `difficulties.json` 一致性的断言，
   防止只更新一个包留下旧定义。
+- 修复更新脚本日志里市场预检段的乱码：子进程强制 UTF-8（`PYTHONUTF8` /
+  `PYTHONIOENCODING`），脚本自身输出也统一 UTF-8；`logs/` 与 `*.log` 被 ZIP 预检排除，
+  不会进插件包。
 
 ## 0.4.2 — 2026-10-29
 

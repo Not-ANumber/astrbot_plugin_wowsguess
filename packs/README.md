@@ -31,7 +31,7 @@ packs/
   不要修改内置目录（插件更新会覆盖）。
 - 维护者更新两个包：`py scripts/update_packs.py`（`--help` 看参数）。两个包共用
   `attributes.json` / `difficulties.json`，`check_market.py` 会检查它们完全一致；
-  每次运行的完整输出写在 `logs/update-packs-<时间>.log`。
+  每次运行的完整输出写在 `logs/update-packs-<时间>.log`（`logs/` 和 `*.log` 不进 ZIP）。
 
 ## WG 包
 

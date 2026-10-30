@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -79,10 +80,10 @@ class Tee:
 
 
 def configure_output() -> None:
-    """行缓冲：把本脚本的输出和子进程输出按执行顺序交错，重定向到日志时也不会乱。"""
+    """统一成 UTF-8 + 行缓冲：控制台、管道和日志三处不会因系统代码页出现乱码。"""
     for stream in (sys.stdout, sys.stderr):
         try:
-            stream.reconfigure(line_buffering=True)
+            stream.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
         except (AttributeError, ValueError):
             pass
 
@@ -117,6 +118,11 @@ def run(cmd: list[str], *, cwd: Path, dry_run: bool) -> None:
     if dry_run:
         return
     # 逐行转发子进程输出：控制台实时可见，同时经 Tee 写进日志。
+    # 显式给 Python 子进程开 UTF-8：普通 Windows 上管道默认是 GBK，
+    # 按 UTF-8 解码会让 check_market / unittest 的中文变成乱码。
+    env = os.environ.copy()
+    env["PYTHONUTF8"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"
     process = subprocess.Popen(
         cmd,
         cwd=str(cwd),
@@ -126,6 +132,7 @@ def run(cmd: list[str], *, cwd: Path, dry_run: bool) -> None:
         encoding="utf-8",
         errors="replace",
         bufsize=1,
+        env=env,
     )
     assert process.stdout is not None
     for line in process.stdout:

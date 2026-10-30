@@ -28,8 +28,8 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 SIZE_LIMIT = 16 * 1024 * 1024
 REQUIRED_ROOT = ("main.py", "metadata.yaml", "_conf_schema.json", "requirements.txt")
-FORBIDDEN_PREFIXES = ("data/", "bot-data/", "_tmp/", "__pycache__/", ".git/")
-FORBIDDEN_SUFFIXES = (".sqlite", ".sqlite-wal", ".sqlite-shm", ".sqlite3", ".pyc")
+FORBIDDEN_PREFIXES = ("data/", "bot-data/", "_tmp/", "logs/", "__pycache__/", ".git/")
+FORBIDDEN_SUFFIXES = (".sqlite", ".sqlite-wal", ".sqlite-shm", ".sqlite3", ".pyc", ".log")
 
 
 class Report:
@@ -259,7 +259,7 @@ def check_zip(report: Report) -> None:
         if bad:
             report.fail(f"ZIP 含有不应发布的文件：{', '.join(sorted(bad)[:8])}")
         else:
-            report.ok("ZIP 未包含 data/、bot-data/、sqlite、缓存或 .env")
+            report.ok("ZIP 未包含 data/、bot-data/、logs/、sqlite、缓存或 .env")
 
         pack_entries = [name for name in names if name.startswith("packs/") and name.endswith(".json")]
         wg_entries = [name for name in pack_entries if name.startswith("packs/wg/")]
