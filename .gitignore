@@ -17,6 +17,7 @@ packs/*
 !packs/wg/
 !packs/lesta/
 _tmp/
+logs/
 .pytest_cache/
 .coverage
 dist/

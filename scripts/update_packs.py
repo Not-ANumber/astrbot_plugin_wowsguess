@@ -13,6 +13,10 @@
     py scripts/update_packs.py --skip-fetch       # 用已有快照重建，不重新抓取
     py scripts/update_packs.py --dry-run          # 只打印将要执行的命令
     py scripts/update_packs.py --strict           # check_market 的 WARN 也当失败
+    py scripts/update_packs.py --log my.log       # 指定日志路径
+
+每次运行默认把完整输出（含子进程的构建 / 测试 / 预检输出）写到
+logs/update-packs-<时间>.log；--no-log 可关闭。
 
 版本检查：脚本读取 https://iwarship.net/wowsdb/index 页面里的 serverVersion
 （ASIA → wg，RU → lesta），与主仓库 data/scripts/servers.mjs 比较。不一致时会停下，
@@ -33,8 +37,9 @@ import subprocess
 import sys
 import urllib.error
 import urllib.request
+from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, TextIO
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SOURCE = ROOT.parent / "GTS"
@@ -48,6 +53,31 @@ class UpdateError(RuntimeError):
     """流程中途失败；由 main 统一打印并返回非 0。"""
 
 
+class Tee:
+    """把写入同时送到控制台和日志文件。"""
+
+    encoding = "utf-8"
+
+    def __init__(self, *streams: TextIO) -> None:
+        self._streams = streams
+
+    def write(self, data: str) -> int:
+        for stream in self._streams:
+            stream.write(data)
+            stream.flush()
+        return len(data)
+
+    def flush(self) -> None:
+        for stream in self._streams:
+            stream.flush()
+
+    def isatty(self) -> bool:
+        return False
+
+    def fileno(self) -> int:
+        return self._streams[0].fileno()
+
+
 def configure_output() -> None:
     """行缓冲：把本脚本的输出和子进程输出按执行顺序交错，重定向到日志时也不会乱。"""
     for stream in (sys.stdout, sys.stderr):
@@ -55,6 +85,19 @@ def configure_output() -> None:
             stream.reconfigure(line_buffering=True)
         except (AttributeError, ValueError):
             pass
+
+
+def open_log(path: Path | None) -> tuple[TextIO, Path] | None:
+    """打开日志文件；默认 logs/update-packs-<时间>.log。失败时只告警，不阻断流程。"""
+    target = path or ROOT / "logs" / f"update-packs-{datetime.now():%Y%m%d-%H%M%S}.log"
+    try:
+        target = target.expanduser().resolve()
+        target.parent.mkdir(parents=True, exist_ok=True)
+        handle = target.open("w", encoding="utf-8", newline="\n")
+    except OSError as exc:
+        print(f"[warn] 无法写日志文件（{exc}）；只在控制台输出")
+        return None
+    return handle, target
 
 
 def read_json(path: Path) -> Any:
@@ -73,9 +116,23 @@ def run(cmd: list[str], *, cwd: Path, dry_run: bool) -> None:
     print(f"$ {printable}    (cwd={cwd})")
     if dry_run:
         return
-    result = subprocess.run(cmd, cwd=str(cwd))
-    if result.returncode != 0:
-        raise UpdateError(f"命令失败（exit {result.returncode}）：{printable}")
+    # 逐行转发子进程输出：控制台实时可见，同时经 Tee 写进日志。
+    process = subprocess.Popen(
+        cmd,
+        cwd=str(cwd),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        bufsize=1,
+    )
+    assert process.stdout is not None
+    for line in process.stdout:
+        print(line, end="")
+    code = process.wait()
+    if code != 0:
+        raise UpdateError(f"命令失败（exit {code}）：{printable}")
 
 
 def fetch_iwarship_versions(timeout: float = 30) -> dict[str, dict[str, Any]]:
@@ -272,6 +329,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--strict", action="store_true", help="check_market 的 WARN 也当失败")
     parser.add_argument("--skip-version-check", action="store_true", help="跳过 iwarship 版本对比")
     parser.add_argument("--allow-stale", action="store_true", help="版本不一致也继续（显式确认）")
+    log_group = parser.add_mutually_exclusive_group()
+    log_group.add_argument(
+        "--log",
+        default=None,
+        help="日志文件路径；默认 logs/update-packs-<时间>.log",
+    )
+    log_group.add_argument("--no-log", action="store_true", help="不写日志文件")
     return parser.parse_args(argv)
 
 
@@ -285,7 +349,25 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[fail] --source 不是主仓库根目录：{source}", file=sys.stderr)
         return 1
 
+    log = None if args.no_log else open_log(Path(args.log) if args.log else None)
+    original_out, original_err = sys.stdout, sys.stderr
+    if log:
+        handle, path = log
+        sys.stdout = Tee(original_out, handle)
+        sys.stderr = Tee(original_err, handle)
+
+    exit_code = 0
     try:
+        print(f"# update_packs {datetime.now().isoformat(timespec='seconds')}")
+        print(f"# python {sys.version.split()[0]}  platform {sys.platform}")
+        print(f"# source {source}")
+        print(
+            f"# servers {', '.join(servers)}  skip_fetch={args.skip_fetch}  "
+            f"strict={args.strict}  dry_run={args.dry_run}",
+        )
+        if log:
+            print(f"[log] {log[1]}")
+
         if args.skip_version_check:
             pipeline = read_pipeline_versions(source)
             print("=== 数据源版本 ===")
@@ -302,8 +384,14 @@ def main(argv: list[str] | None = None) -> int:
         print_checklist(servers)
     except UpdateError as exc:
         print(f"\n[fail] {exc}", file=sys.stderr)
-        return 1
-    return 0
+        exit_code = 1
+    finally:
+        if log:
+            sys.stdout = original_out
+            sys.stderr = original_err
+            log[0].close()
+            print(f"[log] 已写入 {log[1]}")
+    return exit_code
 
 
 if __name__ == "__main__":
