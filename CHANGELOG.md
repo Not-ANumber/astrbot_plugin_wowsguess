@@ -1,6 +1,6 @@
 # Changelog
 
-## 未发布
+## 0.5.0 — 2026-10-30
 
 - 新增 Lesta 服数据链路：主仓库 `npm run data:lesta` 从 iwarship `RU` 快照
   （versionId 446）生成 739 艘船的船表、26 项属性和两套答案池（598 / 593 艘），

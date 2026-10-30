@@ -25,7 +25,7 @@ desc: |
     /1 或 /取消（候选确认）
 
   也支持 # 或 ! 前缀，例如 #窝一把、#秋月，方便避开 AstrBot 自己的 / 指令。
-version: 0.4.2
+version: 0.5.0
 author: wowsguess
 repo: https://github.com/Not-ANumber/astrbot_plugin_wowsguess
 social_link: https://woyiba.com

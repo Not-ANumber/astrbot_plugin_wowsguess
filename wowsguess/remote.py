@@ -19,7 +19,7 @@ from collections.abc import Iterable
 from typing import Any
 
 PROTOCOL_VERSION = 1
-PLUGIN_VERSION = "0.4.2"
+PLUGIN_VERSION = "0.5.0"
 
 # Prefixes accepted in chat. The service itself expects "/" commands; the
 # plugin normalises "#" / "!" variants before sending.
